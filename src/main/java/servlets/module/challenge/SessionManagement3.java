@@ -47,6 +47,9 @@ public class SessionManagement3 extends HttpServlet {
       "t193c6634f049bcf65cdcac72269eeac25dbb2a6887bdb38873e57d0ef447bc3";
   private static String levelResult = "e62008dc47f5eb065229d48963";
   public static final String SUB_USER = "sessionManagement3SubUser";
+  // The privileged sub schema role is held server side. A sub schema sign in never sets it, so no
+  // credential the client supplies can reach the administrator branch.
+  public static final String SUB_ROLE = "sessionManagement3SubRole";
 
   public static String getLevelHash() {
     return levelHash;
@@ -134,22 +137,25 @@ public class SessionManagement3 extends HttpServlet {
             if (resultSet2.next()) {
               log.debug("Successful Admin Login");
               ses.setAttribute(SUB_USER, resultSet2.getString(1));
-              // Get key and add it to the output
-              String userKey =
-                  Hash.generateUserSolution(levelResult, (String) ses.getAttribute("userName"));
-
+              String subRole = (String) ses.getAttribute(SUB_ROLE);
+              if (subRole == null) {
+                subRole = "user";
+                ses.setAttribute(SUB_ROLE, subRole);
+              }
+              log.debug("Sub schema role: " + subRole);
               htmlOutput =
                   "<h2 class='title'>"
                       + bundle.getString("response.welcome")
                       + " "
                       + Encode.forHtml(resultSet2.getString(1))
-                      + "</h2>"
-                      + "<p>"
-                      + bundle.getString("response.resultKey")
-                      + " <a>"
-                      + userKey
-                      + "</a>"
-                      + "</p>";
+                      + "</h2>";
+              if (subRole.equals("administrator")) {
+                // Get key and add it to the output
+                String userKey =
+                    Hash.generateUserSolution(levelResult, (String) ses.getAttribute("userName"));
+                htmlOutput +=
+                    "<p>" + bundle.getString("response.resultKey") + " <a>" + userKey + "</a></p>";
+              }
             } else {
               userAddress =
                   bundle.getString("response.badPass")
