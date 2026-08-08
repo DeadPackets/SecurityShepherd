@@ -81,7 +81,7 @@ public class SqlInjection7 extends HttpServlet {
             log.debug("Signing in with subitted details");
             PreparedStatement prepstmt =
                 conn.prepareStatement(
-                    "SELECT userName FROM users WHERE userEmail = ? AND userPassword = ?;");
+                    "SELECT userName FROM users WHERE userEmail = ? AND userPassword = SHA(?);");
             prepstmt.setString(1, subEmail);
             prepstmt.setString(2, subPassword);
             ResultSet users = prepstmt.executeQuery();
