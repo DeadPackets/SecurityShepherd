@@ -10,12 +10,10 @@ import java.sql.SQLException;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import utils.ShepherdLogManager;
@@ -199,32 +197,17 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
       String htmlOutput = new String();
       log.debug(levelName + " Servlet accessed");
       try {
-        log.debug("Getting Cookies");
-        Cookie userCookies[] = request.getCookies();
-        int i = 0;
-        Cookie theCookie = null;
-        for (i = 0; i < userCookies.length; i++) {
-          if (userCookies[i].getName().compareTo("ac") == 0) {
-            theCookie = userCookies[i];
-            break; // End Loop, because we found the token
-          }
+        // The answer disclosure policy is decided server side; no client cookie can change it
+        String answerPolicy = (String) ses.getAttribute(SessionManagement7.ANSWER_POLICY);
+        if (answerPolicy == null) {
+          answerPolicy = "doNotReturnAnswers";
+          ses.setAttribute(SessionManagement7.ANSWER_POLICY, answerPolicy);
         }
-        if (theCookie != null) {
-          log.debug("Cookie value: " + theCookie.getValue());
-          log.debug("Cookie value: " + theCookie.getValue());
-          byte[] decodedCookieBytes = Base64.decodeBase64(theCookie.getValue());
-          String decodedCookie = new String(decodedCookieBytes, "UTF-8");
-          log.debug("Decoded Cookie: " + decodedCookie);
-          if (decodedCookie.equals("doNotReturnAnswers")) // Untampered Cookie
-          {
-            // Question not translated as DB will only mark English answers as correct
-            htmlOutput = new String("What is your favourite flower?");
-          } else {
-            log.debug("Tampered cookie detected");
-            htmlOutput = bundle.getString("response.configError");
-          }
+        if (answerPolicy.equals("doNotReturnAnswers")) {
+          // Question not translated as DB will only mark English answers as correct
+          htmlOutput = new String("What is your favourite flower?");
         } else {
-          log.debug("Tampered cookie detected");
+          log.debug("Answer disclosure is disabled");
           htmlOutput = bundle.getString("response.configError");
         }
         log.debug("Outputting HTML");
