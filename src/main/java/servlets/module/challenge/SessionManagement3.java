@@ -116,57 +116,41 @@ public class SessionManagement3 extends HttpServlet {
         callstmt.execute();
         log.debug("Changes committed.");
 
+        // The password is part of the lookup, so no account is signed in and no user name and
+        // role are disclosed until the submitted credentials have been verified
         callstmt =
             conn.prepareStatement(
-                "SELECT userName, userAddress, userRole FROM users WHERE userName = ?");
+                "SELECT userName, userAddress, userRole FROM users WHERE userName = ? AND"
+                    + " userPassword = SHA(?)");
         callstmt.setString(1, subName);
-        log.debug("Executing findUser");
+        callstmt.setString(2, subPass);
+        log.debug("Executing authUser");
         ResultSet resultSet = callstmt.executeQuery();
         if (resultSet.next()) {
-          log.debug("User found");
+          ses.setAttribute(SUB_USER, resultSet.getString(1));
           if (resultSet.getString(3).equalsIgnoreCase("admin")) {
-            log.debug("Admin Detected");
-            callstmt =
-                conn.prepareStatement(
-                    "SELECT userName, userAddress, userRole FROM users WHERE userName = ? AND"
-                        + " userPassword = SHA(?)");
-            callstmt.setString(1, subName);
-            callstmt.setString(2, subPass);
-            log.debug("Executing authUser");
-            ResultSet resultSet2 = callstmt.executeQuery();
-            if (resultSet2.next()) {
-              log.debug("Successful Admin Login");
-              ses.setAttribute(SUB_USER, resultSet2.getString(1));
-              String subRole = (String) ses.getAttribute(SUB_ROLE);
-              if (subRole == null) {
-                subRole = "user";
-                ses.setAttribute(SUB_ROLE, subRole);
-              }
-              log.debug("Sub schema role: " + subRole);
-              htmlOutput =
-                  "<h2 class='title'>"
-                      + bundle.getString("response.welcome")
-                      + " "
-                      + Encode.forHtml(resultSet2.getString(1))
-                      + "</h2>";
-              if (subRole.equals("administrator")) {
-                // Get key and add it to the output
-                String userKey =
-                    Hash.generateUserSolution(levelResult, (String) ses.getAttribute("userName"));
-                htmlOutput +=
-                    "<p>" + bundle.getString("response.resultKey") + " <a>" + userKey + "</a></p>";
-              }
-            } else {
-              userAddress =
-                  bundle.getString("response.badPass")
-                      + " <a>"
-                      + Encode.forHtml(resultSet.getString(1))
-                      + "</a><br/>";
-              htmlOutput = makeTable(userAddress, bundle);
+            log.debug("Successful Admin Login");
+            String subRole = (String) ses.getAttribute(SUB_ROLE);
+            if (subRole == null) {
+              subRole = "user";
+              ses.setAttribute(SUB_ROLE, subRole);
+            }
+            log.debug("Sub schema role: " + subRole);
+            htmlOutput =
+                "<h2 class='title'>"
+                    + bundle.getString("response.welcome")
+                    + " "
+                    + Encode.forHtml(resultSet.getString(1))
+                    + "</h2>";
+            if (subRole.equals("administrator")) {
+              // Get key and add it to the output
+              String userKey =
+                  Hash.generateUserSolution(levelResult, (String) ses.getAttribute("userName"));
+              htmlOutput +=
+                  "<p>" + bundle.getString("response.resultKey") + " <a>" + userKey + "</a></p>";
             }
           } else {
             log.debug("Successful Guest Login");
-            ses.setAttribute(SUB_USER, resultSet.getString(1));
             htmlOutput =
                 makeTable(bundle)
                     + "<h2 class='title'>"
@@ -177,6 +161,7 @@ public class SessionManagement3 extends HttpServlet {
                     + "</p><br/><br/>";
           }
         } else {
+          log.debug("Incorrect credentials");
           userAddress = bundle.getString("response.badUser") + "<br/>";
           htmlOutput = makeTable(userAddress, bundle);
         }

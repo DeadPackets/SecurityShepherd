@@ -110,23 +110,22 @@ public class SessionManagement5SetToken extends HttpServlet {
         callstmt.setString(1, userName);
         log.debug("Executing findUser");
         ResultSet resultSet = callstmt.executeQuery();
-        // Is the username valid?
         if (resultSet.next()) {
           log.debug("User found");
           // The reset token is a secret sent to the account holder, so it is stored against the
           // account it was issued for and never returned in this response
           ses.setAttribute(RESET_USER, resultSet.getString(1));
           ses.setAttribute(RESET_TOKEN, Hash.randomString());
-          htmlOutput =
-              bundle.getString("setToken.sentTo.1")
-                  + " '"
-                  + Encode.forHtml(userName)
-                  + "' "
-                  + bundle.getString("setToken.sentTo.2");
         } else {
           log.debug("User not Found");
-          htmlOutput = bundle.getString("response.badUser") + "" + Encode.forHtml(userName);
         }
+        // The same message either way, so the form cannot be used to enumerate accounts
+        htmlOutput =
+            bundle.getString("setToken.sentTo.1")
+                + " '"
+                + Encode.forHtml(userName)
+                + "' "
+                + bundle.getString("setToken.sentTo.2");
         log.debug("Outputting HTML");
         out.write(htmlOutput);
       } catch (Exception e) {

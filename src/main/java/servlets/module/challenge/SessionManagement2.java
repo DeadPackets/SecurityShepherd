@@ -49,6 +49,7 @@ public class SessionManagement2 extends HttpServlet {
   // The privileged sub schema role is held server side. A sub schema sign in never sets it, so no
   // credential the client supplies can reach the administrator branch.
   public static final String SUB_ROLE = "sessionManagement2SubRole";
+  public static final String SUB_ADDRESS = "sessionManagement2SubAddress";
 
   /**
    * The user attempts to use this function to sign into a sub schema. If they successfully sign in
@@ -123,6 +124,7 @@ public class SessionManagement2 extends HttpServlet {
         ResultSet resultSet = callstmt.executeQuery();
         if (resultSet.next()) {
           log.debug("Successful Login");
+          ses.setAttribute(SUB_ADDRESS, resultSet.getString(2));
           String subRole = (String) ses.getAttribute(SUB_ROLE);
           if (subRole == null) {
             subRole = "user";
