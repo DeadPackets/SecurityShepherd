@@ -333,8 +333,9 @@ public class DirectObjectBankLogin extends HttpServlet {
       }
     } catch (SQLException e) {
       throw e;
+    } finally {
+      Database.closeConnection(conn);
     }
-    conn.close();
     return toReturn;
   }
 }

@@ -81,6 +81,7 @@ public class SessionManagement7 extends HttpServlet {
 
       String htmlOutput = new String();
       log.debug(levelName + " Servlet Accessed");
+      Connection conn = null;
       try {
         // The answer disclosure policy is decided server side; no client cookie can change it
         String answerPolicy = (String) ses.getAttribute(ANSWER_POLICY);
@@ -105,7 +106,7 @@ public class SessionManagement7 extends HttpServlet {
           log.debug("subPass = " + subPass);
 
           String ApplicationRoot = getServletContext().getRealPath("");
-          Connection conn =
+          conn =
               Database.getChallengeConnection(ApplicationRoot, "BrokenAuthAndSessMangChalFlowers");
           log.debug("Checking credentials");
           PreparedStatement callstmt;
@@ -156,7 +157,6 @@ public class SessionManagement7 extends HttpServlet {
             userAddress = bundle.getString("response.badUser") + "<br/>";
             htmlOutput = makeTable(userAddress, bundle);
           }
-          Database.closeConnection(conn);
           log.debug("Outputting HTML");
         } else {
           log.debug("Answer disclosure is disabled");
@@ -166,6 +166,8 @@ public class SessionManagement7 extends HttpServlet {
       } catch (Exception e) {
         out.write(errors.getString("error.funky"));
         log.fatal(levelName + " - " + e.toString());
+      } finally {
+        Database.closeConnection(conn);
       }
     } else {
       log.error(levelName + " servlet accessed with no session");

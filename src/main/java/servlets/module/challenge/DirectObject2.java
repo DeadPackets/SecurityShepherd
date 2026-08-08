@@ -81,6 +81,7 @@ public class DirectObject2 extends HttpServlet {
       log.debug(levelName + " servlet accessed by: " + ses.getAttribute("userName").toString());
       PrintWriter out = response.getWriter();
       out.print(getServletInfo());
+      Connection conn = null;
       try {
         String userId = request.getParameter("userId[]");
         log.debug("User Submitted - " + userId);
@@ -99,8 +100,7 @@ public class DirectObject2 extends HttpServlet {
 
         // Only the profiles presented to the user on the challenge page may be read by them
         if (visibleProfileIds.contains(userId)) {
-          Connection conn =
-              Database.getChallengeConnection(ApplicationRoot, "directObjectRefChalTwo");
+          conn = Database.getChallengeConnection(ApplicationRoot, "directObjectRefChalTwo");
           PreparedStatement prepstmt =
               conn.prepareStatement("SELECT userName, privateMessage FROM users WHERE userId = ?");
           prepstmt.setString(1, userId);
@@ -121,7 +121,6 @@ public class DirectObject2 extends HttpServlet {
           } else {
             log.debug("No Profile Found");
           }
-          Database.closeConnection(conn);
         } else {
           log.debug("Profile requested that was never presented to the user: " + userId);
         }
@@ -130,6 +129,8 @@ public class DirectObject2 extends HttpServlet {
       } catch (Exception e) {
         out.write(errors.getString("error.funky"));
         log.fatal(levelName + " - " + e.toString());
+      } finally {
+        Database.closeConnection(conn);
       }
     } else {
       log.error(levelName + " servlet accessed with no session");
