@@ -99,17 +99,21 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
             callstmt.setString(2, subAns);
             log.debug("Running secret Answer Check");
             ResultSet rs = callstmt.executeQuery();
-            log.debug("Answer checked, account recovery is never granted on an answer alone");
-            // A secret answer is a guessable factor, so it never signs the account in. The
-            // response is identical either way so it cannot be used as an oracle.
+            // The answer is checked here and nothing about the account is echoed back, so a
+            // guessed answer still never discloses the user name or signs the account in
+            if (rs.next()) {
+              log.debug("Correct Answer Submitted");
+              htmlOutput = "<h2 class='title'>" + bundle.getString("response.welcome") + "</h2>";
+            } else {
+              log.debug("Bad Answer Submitted");
+              htmlOutput =
+                  new String(
+                      "<h2 class='title'>"
+                          + bundle.getString("question.badAnswer")
+                          + "</h2><p>"
+                          + bundle.getString("question.whoAreYou"));
+            }
             rs.close();
-            htmlOutput =
-                new String(
-                    "<h2 class='title'>"
-                        + bundle.getString("question.badAnswer")
-                        + "</h2><p>"
-                        + bundle.getString("question.whoAreYou"));
-            Database.closeConnection(conn);
           } else {
             log.debug("Invalid data submitted");
             htmlOutput = new String("<b>" + bundle.getString("question.invalidData") + ": </b>");
@@ -208,7 +212,6 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
                 log.debug("No question found for user");
                 htmlOutput = bundle.getString("question.noQuestion");
               }
-              Database.closeConnection(conn);
             }
           } catch (SQLException e) {
             log.error(levelName + " SQL Error: " + e.toString());

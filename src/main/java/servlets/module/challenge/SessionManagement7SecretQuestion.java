@@ -44,9 +44,9 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
   private static String levelName = "Session Management Challenge 7 (Secret Question)";
   private static String levelHash =
       "269d55bc0e0ff635dcaeec8533085e5eae5d25e8646dcd4b05009353c9cf9c80";
-  // The answer space for the secret question is tiny, so wrong answers are capped per session
-  private static final String ANSWER_ATTEMPTS = "sessionManagement7AnswerAttempts";
-  private static final int MAX_ANSWER_ATTEMPTS = 3;
+  // The answer space is seven known flowers, so wrong answers are capped per session
+  private static final String FAILED_ANSWERS = "sessionManagement7FailedAnswers";
+  private static final int MAX_FAILED_ANSWERS = 10;
   // To catch most requests before calling the DB, the in comming Answers must be one of the
   // following flowers
   private static String possibleAnswers[] = {
@@ -99,11 +99,20 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
         Object emailObj = request.getParameter("subEmail");
         String subEmail = Validate.validateParameter(emailObj, 60);
         log.debug("subEmail = " + subEmail);
-        Integer failedAnswers = (Integer) ses.getAttribute(ANSWER_ATTEMPTS);
+        Integer failedAnswers = (Integer) ses.getAttribute(FAILED_ANSWERS);
         if (failedAnswers == null) {
           failedAnswers = 0;
         }
-        if (validAnswer(subAns) && failedAnswers < MAX_ANSWER_ATTEMPTS) {
+        if (failedAnswers >= MAX_FAILED_ANSWERS) {
+          log.debug("Too many failed answers on this session");
+          htmlOutput =
+              new String(
+                  "<h2 class='title'>"
+                      + bundle.getString("question.badAnswer")
+                      + "</h2><p>"
+                      + bundle.getString("question.whoAreYou")
+                      + "</p>");
+        } else if (validAnswer(subAns)) {
           log.debug("Submitted answer is a possible valid answer");
           String ApplicationRoot = getServletContext().getRealPath("");
           Connection conn = null;
@@ -120,18 +129,24 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
               callstmt.setString(2, subAns);
               log.debug("Running secret Answer Check");
               ResultSet rs = callstmt.executeQuery();
-              log.debug("Answer checked, account recovery is never granted on an answer alone");
-              // The answer set is seven known flowers, so it never signs the account in. The
-              // response is identical either way so it cannot be used as an oracle.
+              // The answer is checked here and nothing about the account is echoed back, so a
+              // guessed answer still never discloses the user name or signs the account in
+              if (rs.next()) {
+                log.debug("Correct Answer Submitted");
+                ses.removeAttribute(FAILED_ANSWERS);
+                htmlOutput = "<h2 class='title'>" + bundle.getString("response.welcome") + "</h2>";
+              } else {
+                log.debug("Bad Answer Submitted");
+                ses.setAttribute(FAILED_ANSWERS, failedAnswers + 1);
+                htmlOutput =
+                    new String(
+                        "<h2 class='title'>"
+                            + bundle.getString("question.badAnswer")
+                            + "</h2><p>"
+                            + bundle.getString("question.whoAreYou")
+                            + "</p>");
+              }
               rs.close();
-              ses.setAttribute(ANSWER_ATTEMPTS, failedAnswers + 1);
-              htmlOutput =
-                  new String(
-                      "<h2 class='title'>"
-                          + bundle.getString("question.badAnswer")
-                          + "</h2><p>"
-                          + bundle.getString("question.whoAreYou")
-                          + "</p>");
             } else {
               log.debug("Invalid data submitted");
               htmlOutput = new String("<b>" + bundle.getString("question.invalidData") + ": </b>");
@@ -147,8 +162,8 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
             Database.closeConnection(conn);
           }
         } else {
-          log.debug("Invalid answer, or attempt limit reached, skipping rest of function");
-          ses.setAttribute(ANSWER_ATTEMPTS, failedAnswers + 1);
+          log.debug("Invalid answer submitted for any user, skipping rest of function");
+          ses.setAttribute(FAILED_ANSWERS, failedAnswers + 1);
           htmlOutput =
               new String(
                   "<h2 class='title'>"
