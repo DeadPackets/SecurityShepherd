@@ -76,7 +76,7 @@ public class SqlInjection7 extends HttpServlet {
         log.debug("subPassword - " + subPassword);
         boolean validEmail =
             Validate.isValidEmailAddress(subEmail.replaceAll("\n", "")); // Ignore \n 's
-        if (!subPassword.isEmpty() && !subPassword.isEmpty() && validEmail) {
+        if (!subEmail.isEmpty() && !subPassword.isEmpty() && validEmail) {
           conn = Database.getChallengeConnection(applicationRoot, "SqlChallengeSeven");
           try {
             log.debug("Signing in with subitted details");

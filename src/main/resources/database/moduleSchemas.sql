@@ -1094,14 +1094,19 @@ USE `directObjectBank`;
 -- DELIMITER $$
 CREATE PROCEDURE `directObjectBank`.`transferFunds` (IN theGiverAccountNumber VARCHAR(45), IN theReceiverAccountNumber VARCHAR(45), IN theAmount FLOAT)
 BEGIN
-COMMIT;
+DECLARE debited INT;
+START TRANSACTION;
 UPDATE `directObjectBank`.`bankAccounts`
 	SET account_balance = account_balance - theAmount
-	WHERE account_number = theGiverAccountNumber;
-UPDATE `directObjectBank`.`bankAccounts`
-	SET account_balance = account_balance + theAmount
-	WHERE account_number = theReceiverAccountNumber;
+	WHERE account_number = theGiverAccountNumber AND account_balance >= theAmount;
+SET debited = ROW_COUNT();
+IF (debited > 0) THEN
+	UPDATE `directObjectBank`.`bankAccounts`
+		SET account_balance = account_balance + theAmount
+		WHERE account_number = theReceiverAccountNumber;
+END IF;
 COMMIT;
+SELECT debited;
 END
 ;
 -- $$
