@@ -39,6 +39,9 @@ public class Validate {
   public static Cookie getSessionId(Cookie[] userCookies) {
     int i = 0;
     Cookie theSessionId = null;
+    if (userCookies == null) {
+      return null;
+    }
     for (i = 0; i < userCookies.length; i++) {
       if (userCookies[i].getName().compareTo("JSESSIONID") == 0) {
         theSessionId = userCookies[i];
@@ -57,6 +60,9 @@ public class Validate {
   public static Cookie getToken(Cookie[] userCookies) {
     int i = 0;
     Cookie theToken = null;
+    if (userCookies == null) {
+      return null;
+    }
     for (i = 0; i < userCookies.length; i++) {
       if (userCookies[i].getName().compareTo("token") == 0) {
         theToken = userCookies[i];
@@ -116,6 +122,9 @@ public class Validate {
    */
   public static boolean isValidEmailAddress(String email) {
     boolean result = true;
+    if (email == null) {
+      return false;
+    }
     try {
       log.debug("Validating email");
       InternetAddress emailAddr = new InternetAddress(email);
@@ -417,6 +426,9 @@ public class Validate {
             result = (role.compareTo("player") == 0 || role.compareTo("admin") == 0);
             if (!result) {
               log.fatal("User Role Parameter Tampered. Role = " + role);
+            } else if (ses.getAttribute("userName") == null) {
+              log.error("Session holds a role but no user name");
+              result = false;
             } else {
               String userName = ses.getAttribute("userName").toString();
               // Has the user been suspended? Should they be kicked?

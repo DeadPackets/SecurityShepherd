@@ -125,6 +125,7 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
           }
         } catch (SQLException e) {
           log.error(levelName + " SQL Error: " + e.toString());
+          htmlOutput = bundle.getString("question.noQuestion");
         } finally {
           Database.closeConnection(conn);
         }

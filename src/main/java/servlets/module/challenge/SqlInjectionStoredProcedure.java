@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -104,7 +105,7 @@ public class SqlInjectionStoredProcedure extends HttpServlet {
                   + "</td><td>"
                   + Encode.forHtml(resultSet.getString(3))
                   + "</td><td>"
-                  + Encode.forHtml(resultSet.getString(4))
+                  + Encode.forHtml(Objects.toString(resultSet.getString(4), ""))
                   + "</td></tr>";
           i++;
         }

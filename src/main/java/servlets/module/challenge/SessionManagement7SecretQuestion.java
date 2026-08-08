@@ -158,6 +158,13 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
             }
           } catch (SQLException e) {
             log.error(levelName + " SQL Error: " + e.toString());
+            htmlOutput =
+                new String(
+                    "<h2 class='title'>"
+                        + bundle.getString("question.badAnswer")
+                        + "</h2><p>"
+                        + bundle.getString("question.whoAreYou")
+                        + "</p>");
           } finally {
             Database.closeConnection(conn);
           }
