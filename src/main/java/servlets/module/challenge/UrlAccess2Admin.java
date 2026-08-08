@@ -75,7 +75,7 @@ public class UrlAccess2Admin extends HttpServlet {
             "Unauthorised admin function request by: " + ses.getAttribute("userName").toString());
         out.write(
             "<h2 class='title'>"
-                + bundle.getString("response.failue")
+                + bundle.getString("response.failure")
                 + "</h2>"
                 + "<p>"
                 + bundle.getString("response.failue.message")
@@ -110,7 +110,7 @@ public class UrlAccess2Admin extends HttpServlet {
         } else {
           htmlOutput =
               "<h2 class='title'>"
-                  + bundle.getString("response.failue")
+                  + bundle.getString("response.failure")
                   + "</h2>"
                   + "<p>"
                   + bundle.getString("response.failue.message")

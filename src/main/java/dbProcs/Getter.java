@@ -673,7 +673,7 @@ public class Getter {
       }
     } catch (SQLException e) {
       log.error("Could not execute query: " + e.toString());
-      htmlOutput = "<p>" + bundle.getString("error.occurred ") + "</p>";
+      htmlOutput = "<p>" + bundle.getString("error.occurred") + "</p>";
     } catch (Exception e) {
       log.fatal("Could not return CSRF Forum: " + e.toString());
     }
