@@ -128,9 +128,9 @@ public class PoorValidation2 extends HttpServlet {
     }
   }
 
-  private static int validateAmount(int amount) {
+  private static int validateAmount(int amount) throws IllegalArgumentException {
     if (amount < 0) {
-      amount = 0;
+      throw new IllegalArgumentException("Order amounts cannot be negative");
     }
     return amount;
   }

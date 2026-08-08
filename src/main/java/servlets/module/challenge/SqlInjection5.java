@@ -127,10 +127,10 @@ public class SqlInjection5 extends HttpServlet {
         }
 
         // Work Out Final Cost
-        pineappleCost = pineappleCost - (pineappleCost * (perCentOffPineapple / 100));
-        appleCost = appleCost - (appleCost * (perCentOffApple / 100));
-        bananaCost = bananaCost - (bananaCost * (perCentOffBanana / 100));
-        orangeCost = orangeCost - (orangeCost * (perCentOffOrange / 100));
+        pineappleCost = pineappleCost - ((pineappleCost * perCentOffPineapple) / 100);
+        appleCost = appleCost - ((appleCost * perCentOffApple) / 100);
+        bananaCost = bananaCost - ((bananaCost * perCentOffBanana) / 100);
+        orangeCost = orangeCost - ((orangeCost * perCentOffOrange) / 100);
         int finalCost = pineappleCost + appleCost + bananaCost + orangeCost;
 
         // Output Order
