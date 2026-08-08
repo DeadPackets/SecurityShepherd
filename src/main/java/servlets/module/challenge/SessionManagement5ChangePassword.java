@@ -75,6 +75,7 @@ public class SessionManagement5ChangePassword extends HttpServlet {
       PrintWriter out = response.getWriter();
       out.print(getServletInfo());
       String htmlOutput = new String();
+      Connection conn = null;
       try {
         log.debug("Getting Challenge Parameters");
         Object passNewObj = request.getParameter("newPassword");
@@ -107,8 +108,7 @@ public class SessionManagement5ChangePassword extends HttpServlet {
           String ApplicationRoot = getServletContext().getRealPath("");
           log.debug("Servlet root = " + ApplicationRoot);
 
-          Connection conn =
-              Database.getChallengeConnection(ApplicationRoot, "BrokenAuthAndSessMangChalFive");
+          conn = Database.getChallengeConnection(ApplicationRoot, "BrokenAuthAndSessMangChalFive");
           log.debug("Changing password for user: " + userName);
           PreparedStatement callstmt;
 
@@ -137,6 +137,8 @@ public class SessionManagement5ChangePassword extends HttpServlet {
       } catch (Exception e) {
         out.write(errors.getString("error.funky"));
         log.fatal(levelName + " - Change Password - " + e.toString());
+      } finally {
+        Database.closeConnection(conn);
       }
     } else {
       log.error(levelName + " servlet accessed with no session");

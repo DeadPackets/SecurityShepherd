@@ -67,12 +67,13 @@ public class UrlAccess3UserList extends HttpServlet {
       out.print(getServletInfo());
       String htmlOutput = new String();
 
+      Connection conn = null;
       try {
         // Identity comes from the session. The currentPerson cookie is client controlled and must
         // not select the rows this function returns.
         String currentUser = new String("aGuest");
         String ApplicationRoot = getServletContext().getRealPath("");
-        Connection conn = Database.getChallengeConnection(ApplicationRoot, "UrlAccessThree");
+        conn = Database.getChallengeConnection(ApplicationRoot, "UrlAccessThree");
         PreparedStatement callstmt;
         callstmt =
             conn.prepareStatement("SELECT userName FROM users WHERE userRole = ? OR userName = ?;");
@@ -90,6 +91,8 @@ public class UrlAccess3UserList extends HttpServlet {
       } catch (Exception e) {
         htmlOutput = new String(errors.getString("error.funky"));
         log.fatal(levelName + " - " + e.toString());
+      } finally {
+        Database.closeConnection(conn);
       }
       log.debug("Outputting HTML");
       out.write(htmlOutput);

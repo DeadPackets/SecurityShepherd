@@ -78,6 +78,7 @@ public class SqlInjection3 extends HttpServlet {
       out.print(getServletInfo());
       String htmlOutput = new String();
 
+      Connection conn = null;
       try {
         String theUserName = request.getParameter("theUserName");
         log.debug("User Submitted - " + theUserName);
@@ -85,7 +86,7 @@ public class SqlInjection3 extends HttpServlet {
         log.debug("Servlet root = " + ApplicationRoot);
 
         log.debug("Getting Connection to Database");
-        Connection conn = Database.getChallengeConnection(ApplicationRoot, "SqlChallengeThree");
+        conn = Database.getChallengeConnection(ApplicationRoot, "SqlChallengeThree");
         PreparedStatement stmt =
             conn.prepareStatement("SELECT customerName FROM customers WHERE customerName = ?");
         stmt.setString(1, theUserName);
@@ -119,6 +120,8 @@ public class SqlInjection3 extends HttpServlet {
       } catch (Exception e) {
         out.write(errors.getString("error.funky"));
         log.fatal(levelName + " - " + e.toString());
+      } finally {
+        Database.closeConnection(conn);
       }
       log.debug("Outputting HTML");
       out.write(htmlOutput);
