@@ -49,6 +49,9 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
   private static String levelName = "Session Management Challenge 7 (Secret Question)";
   private static String levelHash =
       "269d55bc0e0ff635dcaeec8533085e5eae5d25e8646dcd4b05009353c9cf9c80";
+  // The answer space for the secret question is tiny, so wrong answers are capped per session
+  private static final String ANSWER_ATTEMPTS = "sessionManagement7AnswerAttempts";
+  private static final int MAX_ANSWER_ATTEMPTS = 3;
   // To catch most requests before calling the DB, the in comming Answers must be one of the
   // following flowers
   private static String possibleAnswers[] = {
@@ -101,7 +104,11 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
         Object emailObj = request.getParameter("subEmail");
         String subEmail = Validate.validateParameter(emailObj, 60);
         log.debug("subEmail = " + subEmail);
-        if (validAnswer(subAns)) {
+        Integer failedAnswers = (Integer) ses.getAttribute(ANSWER_ATTEMPTS);
+        if (failedAnswers == null) {
+          failedAnswers = 0;
+        }
+        if (validAnswer(subAns) && failedAnswers < MAX_ANSWER_ATTEMPTS) {
           log.debug("Submitted answer is a possible valid answer");
           String ApplicationRoot = getServletContext().getRealPath("");
           try {
@@ -119,6 +126,7 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
               ResultSet rs = callstmt.executeQuery();
               if (rs.next()) {
                 log.debug("Correct Answer Submitted");
+                ses.removeAttribute(ANSWER_ATTEMPTS);
                 // Get key and add it to the output
                 String userKey =
                     Hash.generateUserSolution(
@@ -138,6 +146,7 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
                         + "</p>";
               } else {
                 log.debug("Bad Answer Submitted");
+                ses.setAttribute(ANSWER_ATTEMPTS, failedAnswers + 1);
                 htmlOutput =
                     new String(
                         "<h2 class='title'>"
@@ -160,7 +169,8 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
             log.error(levelName + " SQL Error: " + e.toString());
           }
         } else {
-          log.debug("Invalid answer submitted for any user, skipping rest of function");
+          log.debug("Invalid answer, or attempt limit reached, skipping rest of function");
+          ses.setAttribute(ANSWER_ATTEMPTS, failedAnswers + 1);
           htmlOutput =
               new String(
                   "<h2 class='title'>"
