@@ -73,10 +73,11 @@ public class UrlAccess1Admin extends HttpServlet {
       out.print(getServletInfo());
       String htmlOutput = new String();
 
-      // The module signs everyone in as a guest, so no session holds the admin role this
-      // function requires, no matter how the request is constructed
+      // Administrative function. The role is held in the session and is never granted to a player,
+      // so no request a client can craft is authorised here.
       if (!"admin".equals(ses.getAttribute("urlAccess1Role"))) {
-        log.debug("Admin function called by a session without the admin role");
+        log.debug(
+            "Unauthorised admin function request by: " + ses.getAttribute("userName").toString());
         out.write(
             "<h2 class='title'>"
                 + bundle.getString("response.statusFail")

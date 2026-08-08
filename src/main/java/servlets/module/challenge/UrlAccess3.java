@@ -43,14 +43,12 @@ public class UrlAccess3 extends HttpServlet {
       "e40333fc2c40b8e0169e433366350f55c77b82878329570efa894838980de5b4";
 
   /**
-   * Users must take advance of the broken session management in this application by modifying the
-   * tracking cookie "currentPerson" which is encoded in Base64. They must modify this cookie to be
-   * equal a super admin to access the result key.
+   * The super admin function of this sub schema. The caller's persona is read from the session, so
+   * the client cannot present itself as the super admin.
    *
    * @param userId Red herring that is pre set to d3d9446802a44259755d38e6d163e820
    * @param secure Red herring that is pre set to true
    * @param adminDetected Red herring
-   * @param currentPerson Cookie encoded base64 that manages who is signed in to the sub schema
    */
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
@@ -76,10 +74,11 @@ public class UrlAccess3 extends HttpServlet {
             request.getHeader("X-Forwarded-For"),
             ses.getAttribute("userName").toString());
         log.debug(levelName + " servlet accessed by: " + ses.getAttribute("userName").toString());
-        String currentPerson = getCurrentPerson(ses);
         String htmlOutput = null;
-        if (currentPerson.equals("MrJohnReillyTheSecond")) {
-          log.debug("Super Admin detected");
+        // Identity comes from the session. The currentPerson cookie is client controlled and this
+        // module never grants the super admin persona, so the cookie decides nothing.
+        if ("MrJohnReillyTheSecond".equals(ses.getAttribute("urlAccess3Person"))) {
+          log.debug("Super Admin session detected");
           // Get key and add it to the output
           String userKey =
               Hash.generateUserSolution(
@@ -96,11 +95,6 @@ public class UrlAccess3 extends HttpServlet {
                   + userKey
                   + "</a>"
                   + "</p>";
-        } else if (!currentPerson.equals("aGuest")) {
-          log.debug("Unknown person signed into the sub schema: " + currentPerson);
-          htmlOutput = "<!-- " + bundle.getString("response.invalidUser") + " -->";
-        } else {
-          log.debug("Guest signed into the sub schema");
         }
         if (htmlOutput == null) {
           log.debug("Challenge Not Complete");
@@ -154,18 +148,5 @@ public class UrlAccess3 extends HttpServlet {
       out.write(errors.getString("error.funky"));
       log.fatal(levelName + " - " + e.toString());
     }
-  }
-
-  /**
-   * Returns who is signed in to this sub schema. The identity is held server side because the
-   * "currentPerson" cookie is under the control of the client. The sub schema only offers guest
-   * access, so a session that never signed in acts as the guest.
-   *
-   * @param ses The Shepherd session of the requester
-   * @return The name of the person signed in to the sub schema
-   */
-  public static String getCurrentPerson(HttpSession ses) {
-    Object currentPerson = ses.getAttribute("urlAccess3CurrentPerson");
-    return currentPerson == null ? "aGuest" : currentPerson.toString();
   }
 }
