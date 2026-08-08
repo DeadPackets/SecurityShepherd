@@ -3,8 +3,8 @@ package servlets.module.challenge;
 import dbProcs.Database;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Locale;
@@ -78,7 +78,9 @@ public class SqlInjectionStoredProcedure extends HttpServlet {
         log.debug("Getting Connection to Database");
         Connection conn =
             Database.getChallengeConnection(ApplicationRoot, "SqlChallengeStoredProc");
-        CallableStatement callstmt = conn.prepareCall("{CALL findUser(?)}");
+        // prepareStatement rather than prepareCall: the challenge account only holds EXECUTE,
+        // and prepareCall needs procedure metadata this user cannot read.
+        PreparedStatement callstmt = conn.prepareStatement("CALL findUser(?)");
         callstmt.setString(1, userIdentity);
         ResultSet resultSet = callstmt.executeQuery();
 
