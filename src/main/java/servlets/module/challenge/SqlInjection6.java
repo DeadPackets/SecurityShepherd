@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -48,11 +49,12 @@ public class SqlInjection6 extends HttpServlet {
       "d0e12e91dafdba4825b261ad5221aae15d28c36c7981222eb59f7fc8d8f212a2";
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SqlInjection6.class);
+  // Every pin in this schema is four digits, so the lookup accepts nothing else
+  private static final Pattern PIN_NUMBER = Pattern.compile("[0-9]{4}");
 
   /**
-   * This controller makes an insecure call to a MySQL interpreter. User Input is first filtered for
-   * UTF-8 attacks and afterwards is decoded from \xHEX format to UTF-8 before sent to the
-   * interpreter
+   * Looks up a user by their pin number. The pin must be four digits and is bound as a parameter,
+   * so no submitted value reaches the MySQL interpreter as SQL.
    */
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
@@ -76,8 +78,12 @@ public class SqlInjection6 extends HttpServlet {
 
       Connection conn = null;
       try {
-        String userPin = (String) request.getParameter("pinNumber");
+        String userPin = request.getParameter("pinNumber");
         log.debug("userPin - " + userPin);
+        if (userPin == null || !PIN_NUMBER.matcher(userPin).matches()) {
+          log.debug("Rejected a pin that is not four digits");
+          throw new IllegalArgumentException("pinNumber must be four digits");
+        }
         conn = Database.getChallengeConnection(applicationRoot, "SqlChallengeSix");
         log.debug("Looking for users");
         PreparedStatement prepstmt =
