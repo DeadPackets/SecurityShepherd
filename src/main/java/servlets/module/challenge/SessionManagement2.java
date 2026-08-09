@@ -49,8 +49,9 @@ public class SessionManagement2 extends HttpServlet {
 
   /**
    * The user attempts to use this function to sign into a sub schema. If they successfully sign in
-   * then they are able to retrieve the result key for the challenge. A failed sign in says only
-   * that the credentials were wrong, and returns nothing about the account.
+   * then they are able to retrieve the result key for the challenge. A correct user name with an
+   * incorrect password reports which address the account recovery would write to, with the address
+   * itself covered.
    *
    * @param subName Sub schema user name
    * @param subName Sub schema user password
@@ -134,10 +135,21 @@ public class SessionManagement2 extends HttpServlet {
                   + userKey
                   + "</a></p>";
         } else {
-          log.debug("Incorrect credentials");
-          // The same message for a bad user name and a bad password, so accounts and their
-          // email addresses cannot be enumerated with the sign in form
-          userAddress = bundle.getString("response.badUser") + "<br/>";
+          log.debug("Incorrect credentials, checking if user name correct");
+          callstmt = conn.prepareStatement("SELECT userAddress FROM users WHERE userName = ?");
+          callstmt.setString(1, subName);
+          log.debug("Executing getAddress");
+          resultSet = callstmt.executeQuery();
+          if (resultSet.next()) {
+            log.debug("User Found");
+            userAddress =
+                bundle.getString("response.badPass")
+                    + " <a>"
+                    + Encode.forHtml(maskAddress(resultSet.getString(1)))
+                    + "</a><br/>";
+          } else {
+            userAddress = bundle.getString("response.badUser") + "<br/>";
+          }
           htmlOutput = makeTable(userAddress, bundle);
         }
         log.debug("Outputting HTML");
@@ -151,6 +163,24 @@ public class SessionManagement2 extends HttpServlet {
     } else {
       log.error(levelName + " servlet accessed with no session");
     }
+  }
+
+  /**
+   * Covers the local part of an address, keeping its first character and its domain. The holder of
+   * the account can still recognise it; nobody else can read it off and hand it to the reset form.
+   *
+   * @param address Address held against the account
+   * @return The address with its local part covered
+   */
+  private static String maskAddress(String address) {
+    if (address == null) {
+      return "";
+    }
+    int at = address.indexOf('@');
+    if (at < 1) {
+      return "***";
+    }
+    return address.charAt(0) + "***" + address.substring(at);
   }
 
   private static String makeTable(String userAddress, ResourceBundle bundle) {
