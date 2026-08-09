@@ -192,7 +192,10 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
           String ApplicationRoot = getServletContext().getRealPath("");
           Connection conn = null;
           try {
-            if (subEmail.length() < 10) {
+            // The lookup key is an address, so only an address is accepted. Binding it stops the
+            // statement being rewritten; this stops anything that is not an address being run
+            // through the lookup at all, which is what the answer check on the same column does.
+            if (subEmail.length() < 10 || !Validate.isValidEmailAddress(subEmail)) {
               log.debug("Invalid data submitted");
               htmlOutput =
                   new String(
