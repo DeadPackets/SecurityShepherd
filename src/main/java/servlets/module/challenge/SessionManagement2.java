@@ -46,9 +46,6 @@ public class SessionManagement2 extends HttpServlet {
   private static String levelName = "Session Management Challenge Two";
   private static String levelHash =
       "d779e34a54172cbc245300d3bc22937090ebd3769466a501a5e7ac605b9f34b7";
-  // The privileged sub schema role is held server side. A sub schema sign in never sets it, so no
-  // credential the client supplies can reach the administrator branch.
-  public static final String SUB_ROLE = "sessionManagement2SubRole";
   public static final String SUB_ADDRESS = "sessionManagement2SubAddress";
 
   /**
@@ -125,27 +122,21 @@ public class SessionManagement2 extends HttpServlet {
         if (resultSet.next()) {
           log.debug("Successful Login");
           ses.setAttribute(SUB_ADDRESS, resultSet.getString(2));
-          String subRole = (String) ses.getAttribute(SUB_ROLE);
-          if (subRole == null) {
-            subRole = "user";
-            ses.setAttribute(SUB_ROLE, subRole);
-          }
-          log.debug("Sub schema role: " + subRole);
+          // Get key and add it to the output
+          String userKey =
+              Hash.generateUserSolution(
+                  Getter.getModuleResultFromHash(ApplicationRoot, levelHash),
+                  (String) ses.getAttribute("userName"));
           htmlOutput =
               "<h2 class='title'>"
                   + bundle.getString("response.welcome")
                   + " "
                   + Encode.forHtml(resultSet.getString(1))
-                  + "</h2>";
-          if (subRole.equals("administrator")) {
-            // Get key and add it to the output
-            String userKey =
-                Hash.generateUserSolution(
-                    Getter.getModuleResultFromHash(ApplicationRoot, levelHash),
-                    (String) ses.getAttribute("userName"));
-            htmlOutput +=
-                "<p>" + bundle.getString("response.resultKey") + " <a>" + userKey + "</a></p>";
-          }
+                  + "</h2><p>"
+                  + bundle.getString("response.resultKey")
+                  + " <a>"
+                  + userKey
+                  + "</a></p>";
         } else {
           log.debug("Incorrect credentials");
           // The same message for a bad user name and a bad password, so accounts and their

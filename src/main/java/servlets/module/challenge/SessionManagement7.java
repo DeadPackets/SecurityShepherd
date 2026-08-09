@@ -44,10 +44,8 @@ public class SessionManagement7 extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SessionManagement7.class);
   private static String levelName = "Session Management Challenge 7";
-  // The answer disclosure policy and the privileged sub schema role are both held server side,
-  // so no client supplied value can reach the privileged branch.
+  // The answer disclosure policy is held server side, so no client supplied cookie can change it.
   public static final String ANSWER_POLICY = "sessionManagement7AnswerPolicy";
-  public static final String SUB_ROLE = "sessionManagement7SubRole";
   public static String levelHash =
       "269d55bc0e0ff635dcaeec8533085e5eae5d25e8646dcd4b05009353c9cf9c80";
 
@@ -129,27 +127,21 @@ public class SessionManagement7 extends HttpServlet {
           ResultSet resultSet = callstmt.executeQuery();
           if (resultSet.next()) {
             log.debug("Successful Login");
-            String subRole = (String) ses.getAttribute(SUB_ROLE);
-            if (subRole == null) {
-              subRole = "user";
-              ses.setAttribute(SUB_ROLE, subRole);
-            }
-            log.debug("Sub schema role: " + subRole);
+            // Get key and add it to the output
+            String userKey =
+                Hash.generateUserSolution(
+                    Getter.getModuleResultFromHash(ApplicationRoot, levelHash),
+                    (String) ses.getAttribute("userName"));
             htmlOutput =
                 "<h2 class='title'>"
                     + bundle.getString("response.welcome")
                     + " "
                     + Encode.forHtml(resultSet.getString(1))
-                    + "</h2>";
-            if (subRole.equals("administrator")) {
-              // Get key and add it to the output
-              String userKey =
-                  Hash.generateUserSolution(
-                      Getter.getModuleResultFromHash(ApplicationRoot, levelHash),
-                      (String) ses.getAttribute("userName"));
-              htmlOutput +=
-                  "<p>" + bundle.getString("response.resultKey") + " <a>" + userKey + "</a></p>";
-            }
+                    + "</h2><p>"
+                    + bundle.getString("response.resultKey")
+                    + " <a>"
+                    + userKey
+                    + "</a></p>";
           } else {
             log.debug("Incorrect credentials");
             // The same message for a bad user name and a bad password, so accounts and their
