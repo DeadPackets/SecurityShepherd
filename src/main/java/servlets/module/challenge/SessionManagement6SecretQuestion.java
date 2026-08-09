@@ -192,10 +192,7 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
           String ApplicationRoot = getServletContext().getRealPath("");
           Connection conn = null;
           try {
-            // The lookup key is an address, so only an address is accepted. Binding it stops the
-            // statement being rewritten; this stops anything that is not an address being run
-            // through the lookup at all, which is what the answer check on the same column does.
-            if (subEmail.length() < 10 || !Validate.isValidEmailAddress(subEmail)) {
+            if (subEmail.length() < 10) {
               log.debug("Invalid data submitted");
               htmlOutput =
                   new String(
@@ -207,6 +204,8 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
               conn =
                   Database.getChallengeConnection(ApplicationRoot, "BrokenAuthAndSessMangChalSix");
               log.debug("Getting Secret Question");
+              // Binding the address is what stops the lookup being rewritten to return the
+              // secret answers instead of the question it was asked for.
               PreparedStatement callstmt =
                   conn.prepareStatement("SELECT secretQuestion FROM users WHERE userAddress = ?");
               callstmt.setString(1, subEmail);
