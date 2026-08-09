@@ -130,10 +130,8 @@ public class XxeChallenge1OldWebService extends HttpServlet {
     Document doc;
     String result;
 
-    // A submitted document could declare an entity pointing at a path on the server and have the
-    // parser substitute the file's contents into the element this method reads back. Refusing the
-    // document type declaration removes the declaration those entities live in; the external
-    // entity, external DTD and XInclude resolvers are switched off behind it.
+    // Refusing the document type declaration removes the declaration external entities live in,
+    // so a submitted document cannot name a server path and have its contents read back.
     DocumentBuilder dBuilder =
         XmlDocumentBuilder.xmlDocBuilder(true, false, false, false, false, false);
     if (dBuilder == null) {

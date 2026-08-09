@@ -46,10 +46,6 @@ public class SecurityMisconfigStealTokens extends HttpServlet {
   private static String levelName = "Security Misconfig Cookie Flags Servlet";
   public static String levelHash =
       "c4285bbc6734a10897d672c1ed3dd9417e0530a4e0186c27699f54637c7fb5d4";
-  private static String levelResult =
-      "92755de2ebb012e689caf8bfec629b1e237d23438427499b6bf0d7933f1b8215"; // Base Key. User is given
-
-  // user specific key
 
   /**
    * This servlet will return the key to complete as long as the cookie submitted is valid and does

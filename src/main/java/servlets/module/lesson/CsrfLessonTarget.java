@@ -54,9 +54,8 @@ public class CsrfLessonTarget extends HttpServlet {
       HttpSession ses = request.getSession(true);
       Cookie tokenCookie = Validate.getToken(request.getCookies());
       Object tokenParmeter = request.getParameter("csrfToken");
-      // The administrator only action rode on the session cookie alone, so any page anywhere could
-      // make an administrator's browser perform it. Demanding the anti-CSRF token as well means the
-      // request has to come from a page that could read that token, which an off site page cannot.
+      // The session cookie alone rides on any page's request, so the anti-CSRF token is required
+      // as well: only a page that could read it can send it.
       if (Validate.validateAdminSession(ses)
           && Validate.validateTokens(tokenCookie, tokenParmeter)) {
         ShepherdLogManager.setRequestIp(

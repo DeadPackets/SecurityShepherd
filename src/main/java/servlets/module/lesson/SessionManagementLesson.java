@@ -77,9 +77,8 @@ public class SessionManagementLesson extends HttpServlet {
             break; // End Loop, because we found the token
           }
         }
-        // The cookie is written by the browser and records nothing the server witnessed, so it
-        // cannot decide that the lesson was completed. The only value the page ever writes is
-        // "lessonNotComplete"; anything else arrived from an edited cookie jar.
+        // The cookie is written by the browser, so it decides nothing. The page only ever writes
+        // "lessonNotComplete"; any other value arrived from an edited cookie jar.
         if (theCookie != null && !theCookie.getValue().equals("lessonNotComplete")) {
           log.error(levelName + " received an edited lesson tracking cookie");
         }

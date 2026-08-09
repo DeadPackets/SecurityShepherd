@@ -74,10 +74,8 @@ public class CsrfChallengeSevenGetToken extends HttpServlet {
             ses.getAttribute("userName").toString());
         log.debug(levelName + " servlet accessed by: " + ses.getAttribute("userName").toString());
         String htmlOutput = new String("Your csrf Token for this Challenge is: ");
-        // The identifier used to come from the request, so this endpoint handed out any user's
-        // anti-CSRF token to anybody who asked for it, and a LIKE pattern returned all of them at
-        // once. A token another party can read protects nothing, so only the caller's own token is
-        // looked up and the identifier is matched exactly.
+        // A token another party can read protects nothing, so the identifier comes from the
+        // session and is matched exactly rather than with LIKE.
         String userId = (String) ses.getAttribute("userStamp");
 
         conn =

@@ -65,9 +65,8 @@ public class SecurityMisconfigLesson extends HttpServlet {
       try {
         String userName = request.getParameter("userName");
         log.debug("User Name - " + userName);
-        // The administrator account shipped with a password written into this class, so anybody who
-        // had ever seen the source held working administrative credentials. The pair no longer
-        // authenticates, so a value published with the application cannot sign anybody in.
+        // A credential published with the application authenticates nobody, so no submission
+        // reaches an administrator branch here.
         log.debug(levelName + " does not accept the credential it used to ship with");
         String htmlOutput = new String();
         if (userName.contentEquals("admin")) {

@@ -72,9 +72,8 @@ public class PoorValidationLesson extends HttpServlet {
       try {
         String userData = request.getParameter("userdata");
         log.debug("User Submitted - " + userData);
-        // The bound that stops this number going negative was only applied by the form, which runs
-        // in the submitter's own browser and can be edited or skipped. The same bound is applied
-        // here, where the value arrives, instead of being taken on trust from the request.
+        // The form runs in the submitter's own browser, so its lower bound is applied again here
+        // where the value arrives.
         int userNumber = Math.max(Integer.parseInt(userData), MINIMUM_NUMBER);
         log.debug("Accepted Number - " + userNumber);
         String htmlOutput =

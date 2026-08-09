@@ -212,11 +212,8 @@ public class BrokenCryptoHomeMade extends HttpServlet {
                 "i18n.servlets.challenges.insecureCryptoStorage.insecureCryptoStorage", locale);
         out.print(getServletInfo());
         try {
-          // The name keyed the encryption and used to come from the request, which made this an
-          // encryption oracle: asking for the table under chosen names and comparing the cipher
-          // text recovered the server side key one byte at a time, and with it every other user's
-          // solution. The page already renders under the signed in name, so it is taken from the
-          // session instead.
+          // The name keys the encryption, so taking it from the request would make this an
+          // encryption oracle that recovers the server key one byte at a time.
           String name = ses.getAttribute("userName").toString();
           if (name.length() < 4) {
             htmlOutput = bundle.getString("insecureCryptoStorage.homemade.nameTooShort");
@@ -262,10 +259,8 @@ public class BrokenCryptoHomeMade extends HttpServlet {
     if (userNameKey.length() != 16) {
       throw new Exception("User Name key must be 16 bytes long");
     } else {
-      // The two keys were added byte by byte and the sum pushed back through US-ASCII, so every
-      // result above 0x7F landed on the same character and each byte of the server key could be
-      // read off by varying the name one position at a time. A digest mixes both inputs without
-      // that structure, and its Base64 form survives the US-ASCII round trip the callers perform.
+      // Adding the keys byte by byte leaks the server key one position at a time. Base64 is
+      // required because the callers read the key back through US-ASCII.
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
       digest.update(serverEncryptionKey.getBytes(Charset.forName("US-ASCII")));
       digest.update(userNameKey.getBytes(Charset.forName("US-ASCII")));
@@ -354,10 +349,8 @@ public class BrokenCryptoHomeMade extends HttpServlet {
       SecureRandom psn1 = SecureRandom.getInstance("SHA1PRNG");
       psn1.setSeed(psn1.nextLong());
       psn1.nextBytes(byteArray);
-      // Reading the raw bytes as US-ASCII discarded every value above 0x7F onto one replacement
-      // character, so most of a generated key collapsed and it carried far less entropy than its
-      // length suggested. Encoding the bytes keeps them inside the character set the callers read
-      // the key back through.
+      // Raw bytes read as US-ASCII collapse every value above 0x7F onto one character, so the
+      // key is encoded to keep its entropy inside the character set the callers use.
       result = Base64.encodeBase64String(byteArray).substring(0, 16);
     } catch (Exception e) {
       log.error("Random Number Error : " + e.toString());

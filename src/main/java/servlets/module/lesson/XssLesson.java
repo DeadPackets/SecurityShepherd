@@ -102,9 +102,6 @@ public class XssLesson extends HttpServlet {
                   + "<p>"
                   + bundle.getString("response.noResults")
                   + " '"
-                  // The search term was written back as markup, so whatever the submitter put in
-                  // it became part of the document. Encoding it for the HTML body means it is
-                  // only ever read back as the text that was typed.
                   + Encode.forHtml(searchTerm)
                   + "'</p>";
           log.debug("Outputting HTML");

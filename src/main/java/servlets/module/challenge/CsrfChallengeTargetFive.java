@@ -79,10 +79,8 @@ public class CsrfChallengeTargetFive extends HttpServlet {
         if (ses.getAttribute("csrfChallengeFiveNonce") == null
             || ses.getAttribute("csrfChallengeFiveNonce").toString().isEmpty()) {
           log.debug("No CSRF Token associated with user");
-          // The nonce used to be one of three integers, so an off site page could send all of its
-          // possible values and one request was bound to be accepted. Drawing it from the same
-          // source as the session token makes it unguessable, which is the only property that
-          // makes a synchroniser token evidence of where the request came from.
+          // Unguessability is the only property that makes a synchroniser token evidence of
+          // where a request came from, so the nonce is drawn from the session token's source.
           String newToken = Hash.randomString();
           out.write(csrfGenerics.getString("target.noTokenNewToken") + " " + newToken + "<br><br>");
           storedToken = newToken;

@@ -449,8 +449,8 @@ public class Validate {
               }
             }
           } catch (Exception e) {
-            // result is already true by this point, and the suspension check that follows it can
-            // throw, so a swallowed exception would hand a kicked user a valid session
+            // result is already true here and the suspension check below can throw, so a
+            // swallowed exception would hand a kicked user a valid session
             result = false;
             log.fatal("Could not validate session: " + e.toString());
           }

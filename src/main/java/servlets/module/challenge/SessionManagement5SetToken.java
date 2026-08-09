@@ -54,7 +54,7 @@ public class SessionManagement5SetToken extends HttpServlet {
   public static final String RESET_USER = "sessionManagement5ResetUser";
   public static final String RESET_TOKEN = "sessionManagement5ResetToken";
   public static final String RESET_ISSUED = "sessionManagement5ResetIssued";
-  // The challenge page tells the holder a token lives ten minutes. Nothing enforced it.
+  // The challenge page tells the holder a token lives ten minutes
   public static final long TOKEN_LIFE_MILLIS = 10 * 60 * 1000L;
 
   /**

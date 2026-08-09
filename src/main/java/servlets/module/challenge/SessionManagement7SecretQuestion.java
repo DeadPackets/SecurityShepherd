@@ -42,8 +42,6 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SessionManagement7SecretQuestion.class);
   private static String levelName = "Session Management Challenge 7 (Secret Question)";
-  private static String levelHash =
-      "269d55bc0e0ff635dcaeec8533085e5eae5d25e8646dcd4b05009353c9cf9c80";
   // The answer space is the seven known flowers below, so the cap has to be smaller than it or the
   // whole space can be tried before it applies
   private static final String FAILED_ANSWERS = "sessionManagement7FailedAnswers";

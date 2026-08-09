@@ -80,10 +80,8 @@ public class CsrfChallengeTargetSix extends HttpServlet {
         if (ses.getAttribute(csrfTokenName) == null
             || ses.getAttribute(csrfTokenName).toString().isEmpty()) {
           log.debug("No CSRF Token associated with user");
-          // The nonce used to be picked from three values written into this class, so an off site
-          // page could send all of them and one request was bound to be accepted. Drawing it from
-          // the same source as the session token makes it unguessable, which is the only property
-          // that makes a synchroniser token evidence of where the request came from.
+          // Unguessability is the only property that makes a synchroniser token evidence of
+          // where a request came from, so the nonce is drawn from the session token's source.
           storedToken = Hash.randomString();
           out.write(
               csrfGenerics.getString("target.noTokenNewToken") + " " + storedToken + "<br><br>");
