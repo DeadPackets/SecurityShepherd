@@ -80,15 +80,22 @@ public class SessionManagement5ChangePassword extends HttpServlet {
         log.debug("Getting Challenge Parameters");
         Object passNewObj = request.getParameter("newPassword");
         Object tokenObj = request.getParameter("resetPasswordToken");
+        Object userObj = request.getParameter("userName");
         String newPass = new String();
         String token = new String();
+        String subName = new String();
         if (passNewObj != null) {
           newPass = (String) passNewObj;
         }
         if (tokenObj != null) {
           token = (String) tokenObj;
         }
-        // The account to reset is the one the token was issued for, never one named in the request
+        if (userObj != null) {
+          subName = (String) userObj;
+        }
+        // The account to reset is the one the token was issued for. The name in the request is
+        // answered rather than acted on: if it is a different account the reset is refused, so no
+        // caller is told a reset succeeded for an account this never touched.
         String issuedToken = (String) ses.getAttribute(SessionManagement5SetToken.RESET_TOKEN);
         String userName = (String) ses.getAttribute(SessionManagement5SetToken.RESET_USER);
         Long issuedAt = (Long) ses.getAttribute(SessionManagement5SetToken.RESET_ISSUED);
@@ -102,10 +109,11 @@ public class SessionManagement5ChangePassword extends HttpServlet {
         if (issuedToken == null
             || userName == null
             || expired
+            || !userName.equals(subName)
             || !MessageDigest.isEqual(
                 issuedToken.getBytes(StandardCharsets.UTF_8),
                 token.getBytes(StandardCharsets.UTF_8))) {
-          log.debug("No matching reset token was issued, or it has expired");
+          log.debug("No matching reset token was issued for the submitted account, or it expired");
           htmlOutput = "<p>" + bundle.getString("changePass.oldToken") + "</p>";
         } else if (newPass.length() < 12) {
           log.debug("Invalid password submitted");
