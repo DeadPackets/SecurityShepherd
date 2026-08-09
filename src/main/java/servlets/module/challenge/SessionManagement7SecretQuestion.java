@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.owasp.encoder.Encode;
 import utils.ShepherdLogManager;
 import utils.Validate;
 
@@ -42,10 +43,6 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SessionManagement7SecretQuestion.class);
   private static String levelName = "Session Management Challenge 7 (Secret Question)";
-  // The answer space is the seven known flowers below, so the cap has to be smaller than it or the
-  // whole space can be tried before it applies
-  private static final String FAILED_ANSWERS = "sessionManagement7FailedAnswers";
-  private static final int MAX_FAILED_ANSWERS = 3;
   // To catch most requests before calling the DB, the in comming Answers must be one of the
   // following flowers
   private static String possibleAnswers[] = {
@@ -98,20 +95,7 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
         Object emailObj = request.getParameter("subEmail");
         String subEmail = Validate.validateParameter(emailObj, 60);
         log.debug("subEmail = " + subEmail);
-        Integer failedAnswers = (Integer) ses.getAttribute(FAILED_ANSWERS);
-        if (failedAnswers == null) {
-          failedAnswers = 0;
-        }
-        if (failedAnswers >= MAX_FAILED_ANSWERS) {
-          log.debug("Too many failed answers on this session");
-          htmlOutput =
-              new String(
-                  "<h2 class='title'>"
-                      + bundle.getString("question.badAnswer")
-                      + "</h2><p>"
-                      + bundle.getString("question.whoAreYou")
-                      + "</p>");
-        } else if (validAnswer(subAns)) {
+        if (validAnswer(subAns)) {
           log.debug("Submitted answer is a possible valid answer");
           String ApplicationRoot = getServletContext().getRealPath("");
           Connection conn = null;
@@ -128,16 +112,21 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
               callstmt.setString(2, subAns);
               log.debug("Running secret Answer Check");
               ResultSet rs = callstmt.executeQuery();
-              // The answer is checked here and nothing about the account is echoed back, so a
-              // guessed answer still never discloses the user name or signs the account in
               if (rs.next()) {
-                // The count is not cleared here. Guessing one account's answer would otherwise
-                // hand back a full budget of guesses against the next account.
+                // Answering confirms the account for the address that was already submitted. It
+                // stops there: a secret answer is a shared, guessable fact, so it cannot stand in
+                // for the account's password and cannot earn the result key.
                 log.debug("Correct Answer Submitted");
-                htmlOutput = "<h2 class='title'>" + bundle.getString("response.welcome") + "</h2>";
+                htmlOutput =
+                    "<h2 class='title'>"
+                        + bundle.getString("response.welcome")
+                        + " "
+                        + Encode.forHtml(rs.getString(1))
+                        + "</h2><p>"
+                        + bundle.getString("question.whoAreYou")
+                        + "</p>";
               } else {
                 log.debug("Bad Answer Submitted");
-                ses.setAttribute(FAILED_ANSWERS, failedAnswers + 1);
                 htmlOutput =
                     new String(
                         "<h2 class='title'>"
@@ -170,7 +159,6 @@ public class SessionManagement7SecretQuestion extends HttpServlet {
           }
         } else {
           log.debug("Invalid answer submitted for any user, skipping rest of function");
-          ses.setAttribute(FAILED_ANSWERS, failedAnswers + 1);
           htmlOutput =
               new String(
                   "<h2 class='title'>"

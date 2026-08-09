@@ -43,9 +43,6 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SessionManagement6SecretQuestion.class);
   private static String levelName = "Session Management Challenge Six (Secret Question)";
-  // A secret answer is a credential, so wrong answers are capped per session
-  private static final String FAILED_ANSWERS = "sessionManagement6FailedAnswers";
-  private static final int MAX_FAILED_ANSWERS = 3;
 
   /**
    * A user submits a username and answer, these values are checked against the DB to see if they
@@ -86,23 +83,11 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
         Object ansObj = request.getParameter("subAnswer");
         String subAns = Validate.validateParameter(ansObj, 128);
         log.debug("subAnswer = " + subAns);
-        Integer failedAnswers = (Integer) ses.getAttribute(FAILED_ANSWERS);
-        if (failedAnswers == null) {
-          failedAnswers = 0;
-        }
 
         String ApplicationRoot = getServletContext().getRealPath("");
         Connection conn = null;
         try {
-          if (failedAnswers >= MAX_FAILED_ANSWERS) {
-            log.debug("Too many failed answers on this session");
-            htmlOutput =
-                new String(
-                    "<h2 class='title'>"
-                        + bundle.getString("question.badAnswer")
-                        + "</h2><p>"
-                        + bundle.getString("question.whoAreYou"));
-          } else if (Validate.isValidEmailAddress(subEmail) && subAns.length() > 5) {
+          if (Validate.isValidEmailAddress(subEmail) && subAns.length() > 5) {
             conn = Database.getChallengeConnection(ApplicationRoot, "BrokenAuthAndSessMangChalSix");
             log.debug("Checking Secret Answer");
             PreparedStatement callstmt =
@@ -112,16 +97,21 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
             callstmt.setString(2, subAns);
             log.debug("Running secret Answer Check");
             ResultSet rs = callstmt.executeQuery();
-            // The answer is checked here and nothing about the account is echoed back, so a
-            // guessed answer still never discloses the user name or signs the account in
             if (rs.next()) {
-              // The count is not cleared here. Guessing one account's answer would otherwise hand
-              // back a full budget of guesses against the next account.
+              // Answering confirms the account for the address that was already submitted. It
+              // stops there: a secret answer is a shared, guessable fact, so it cannot stand in
+              // for the account's password and cannot earn the result key.
               log.debug("Correct Answer Submitted");
-              htmlOutput = "<h2 class='title'>" + bundle.getString("response.welcome") + "</h2>";
+              htmlOutput =
+                  "<h2 class='title'>"
+                      + bundle.getString("response.welcome")
+                      + " "
+                      + Encode.forHtml(rs.getString(1))
+                      + "</h2><p>"
+                      + bundle.getString("question.whoAreYou")
+                      + "</p>";
             } else {
               log.debug("Bad Answer Submitted");
-              ses.setAttribute(FAILED_ANSWERS, failedAnswers + 1);
               htmlOutput =
                   new String(
                       "<h2 class='title'>"
