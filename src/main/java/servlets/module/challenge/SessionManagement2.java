@@ -46,13 +46,11 @@ public class SessionManagement2 extends HttpServlet {
   private static String levelName = "Session Management Challenge Two";
   private static String levelHash =
       "d779e34a54172cbc245300d3bc22937090ebd3769466a501a5e7ac605b9f34b7";
-  public static final String SUB_ADDRESS = "sessionManagement2SubAddress";
 
   /**
    * The user attempts to use this function to sign into a sub schema. If they successfully sign in
-   * then they are able to retrieve the result key for the challenge If they sign in with a correct
-   * user name but incorrect password then the email address of the user will be returned in a error
-   * message
+   * then they are able to retrieve the result key for the challenge. A failed sign in says only
+   * that the credentials were wrong, and returns nothing about the account.
    *
    * @param subName Sub schema user name
    * @param subName Sub schema user password
@@ -113,15 +111,13 @@ public class SessionManagement2 extends HttpServlet {
 
         callstmt =
             conn.prepareStatement(
-                "SELECT userName, userAddress FROM users WHERE userName = ? AND userPassword ="
-                    + " SHA(?)");
+                "SELECT userName FROM users WHERE userName = ? AND userPassword = SHA(?)");
         callstmt.setString(1, subName);
         callstmt.setString(2, subPass);
         log.debug("Executing authUser");
         ResultSet resultSet = callstmt.executeQuery();
         if (resultSet.next()) {
           log.debug("Successful Login");
-          ses.setAttribute(SUB_ADDRESS, resultSet.getString(2));
           // Get key and add it to the output
           String userKey =
               Hash.generateUserSolution(
