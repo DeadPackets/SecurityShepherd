@@ -47,7 +47,10 @@ public class DirectObject2 extends HttpServlet {
   private static String levelName = "Insecure Direct Object Reference Challenge Two";
   public static String levelHash =
       "vc9b78627df2c032ceaf7375df1d847e47ed7abac2a4ce4cb6086646e0f313a4";
-  private static final List<String> visibleProfileIds =
+
+  // The profiles the directory offers. A reference the caller was never given is not a reference
+  // they may follow, so it is refused rather than looked up.
+  private static final List<String> listedProfiles =
       Arrays.asList(
           "c81e728d9d4c2f636f067f89cc14862c",
           "eccbc87e4b5ce2fe28308fd9f2a7baf3",
@@ -81,56 +84,58 @@ public class DirectObject2 extends HttpServlet {
       log.debug(levelName + " servlet accessed by: " + ses.getAttribute("userName").toString());
       PrintWriter out = response.getWriter();
       out.print(getServletInfo());
-      Connection conn = null;
       try {
         String userId = request.getParameter("userId[]");
         log.debug("User Submitted - " + userId);
+        if (!listedProfiles.contains(userId)) {
+          log.warn("Refused a profile that the directory does not offer");
+          response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+          out.write("<h2 class='title'>" + bundle.getString("response.notFound") + "</h2>");
+          return;
+        }
         String ApplicationRoot = getServletContext().getRealPath("");
         log.debug("Servlet root = " + ApplicationRoot);
-        String htmlOutput =
-            "<h2 class='title'>"
-                + bundle.getString("response.notFound")
-                + "</h2><p>"
-                + bundle.getString("response.notFoundMessage.1")
-                + " '"
-                + Encode.forHtml(userId)
-                + "' "
-                + bundle.getString("response.notFoundMessage.2")
-                + "</p>";
+        String htmlOutput = new String();
 
-        // Only the profiles presented to the user on the challenge page may be read by them
-        if (visibleProfileIds.contains(userId)) {
-          conn = Database.getChallengeConnection(ApplicationRoot, "directObjectRefChalTwo");
-          PreparedStatement prepstmt =
-              conn.prepareStatement("SELECT userName, privateMessage FROM users WHERE userId = ?");
-          prepstmt.setString(1, userId);
-          ResultSet resultSet = prepstmt.executeQuery();
-          if (resultSet.next()) {
-            log.debug("Found user: " + resultSet.getString(1));
-            String userName = resultSet.getString(1);
-            String privateMessage = resultSet.getString(2);
-            htmlOutput =
-                "<h2 class='title'>"
-                    + userName
-                    + "'s "
-                    + bundle.getString("response.message")
-                    + "</h2>"
-                    + "<p>"
-                    + privateMessage
-                    + "</p>";
-          } else {
-            log.debug("No Profile Found");
-          }
+        Connection conn =
+            Database.getChallengeConnection(ApplicationRoot, "directObjectRefChalTwo");
+        PreparedStatement prepstmt =
+            conn.prepareStatement("SELECT userName, privateMessage FROM users WHERE userId = ?");
+        prepstmt.setString(1, userId);
+        ResultSet resultSet = prepstmt.executeQuery();
+        if (resultSet.next()) {
+          log.debug("Found user: " + resultSet.getString(1));
+          String userName = resultSet.getString(1);
+          String privateMessage = resultSet.getString(2);
+          htmlOutput =
+              "<h2 class='title'>"
+                  + userName
+                  + "'s "
+                  + bundle.getString("response.message")
+                  + "</h2>"
+                  + "<p>"
+                  + privateMessage
+                  + "</p>";
         } else {
-          log.debug("Profile requested that was never presented to the user: " + userId);
+          log.debug("No Profile Found");
+
+          htmlOutput =
+              "<h2 class='title'>"
+                  + bundle.getString("response.notFound")
+                  + "</h2><p>"
+                  + bundle.getString("response.notFoundMessage.1")
+                  + " '"
+                  + Encode.forHtml(userId)
+                  + "' "
+                  + bundle.getString("response.notFoundMessage.2")
+                  + "</p>";
         }
         log.debug("Outputting HTML");
         out.write(htmlOutput);
+        Database.closeConnection(conn);
       } catch (Exception e) {
         out.write(errors.getString("error.funky"));
         log.fatal(levelName + " - " + e.toString());
-      } finally {
-        Database.closeConnection(conn);
       }
     } else {
       log.error(levelName + " servlet accessed with no session");
