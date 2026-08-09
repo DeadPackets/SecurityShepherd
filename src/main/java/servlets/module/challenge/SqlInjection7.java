@@ -1,7 +1,6 @@
 package servlets.module.challenge;
 
 import dbProcs.Database;
-import dbProcs.Getter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -17,7 +16,6 @@ import javax.servlet.http.HttpSession;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.owasp.encoder.Encode;
-import utils.Hash;
 import utils.ShepherdLogManager;
 import utils.Validate;
 
@@ -43,8 +41,6 @@ import utils.Validate;
 public class SqlInjection7 extends HttpServlet {
 
   private static final String levelName = "SQLi C7";
-  private static String levelHash =
-      "8c2dd7e9818e5c6a9f8562feefa002dc0e455f0e92c8a46ab0cf519b1547eced";
   private static final long serialVersionUID = 1L;
   private static final Logger log = LogManager.getLogger(SqlInjection7.class);
 
@@ -82,24 +78,20 @@ public class SqlInjection7 extends HttpServlet {
             log.debug("Signing in with subitted details");
             PreparedStatement prepstmt =
                 conn.prepareStatement(
-                    "SELECT userName FROM users WHERE userEmail = ? AND userPassword = SHA(?);");
+                    "SELECT userName FROM users WHERE userEmail = ? AND userPassword = ?;");
             prepstmt.setString(1, subEmail);
             prepstmt.setString(2, subPassword);
             ResultSet users = prepstmt.executeQuery();
             if (users.next()) {
+              // Signing in stops at the welcome. The column this compares against holds the
+              // password itself, so a single row read from the users table is a working
+              // credential for that account, and the key would follow it out of the database.
               htmlOutput =
                   "<h3>"
                       + bundle.getString("response.welcome")
                       + " "
                       + Encode.forHtml(users.getString(1))
-                      + "</h3>"
-                      + "<p>"
-                      + bundle.getString("response.resultKey")
-                      + ""
-                      + Hash.generateUserSolution(
-                          Getter.getModuleResultFromHash(applicationRoot, levelHash),
-                          (String) ses.getAttribute("userName"))
-                      + "</p>";
+                      + "</h3>";
             } else {
               htmlOutput =
                   "<h3>"
